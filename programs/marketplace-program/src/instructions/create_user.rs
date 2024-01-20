@@ -25,8 +25,29 @@ pub fn create_employee_profile(
     Ok(())
 }
 
+
+pub fn create_employer_profile(
+    ctx: Context<InitUserProfileContext>,
+    name: String,
+    email: String,
+    profile_image: String,
+) -> Result<()> {
+    // add a check if pubkey already exists :: respond with error
+    //
+
+    //create user profile
+    UserProfile::init_employer_profile(
+        &mut ctx.accounts.user_profile,
+        name,
+        email,
+        profile_image
+    )?;
+
+    Ok(())
+}
+
 #[derive(Accounts)]
-#[instruction(name: String, email: String, profile_image: String, skills: Option<Vec<String>>,)]
+#[instruction(name: String, email: String, profile_image: String,)] //using skills here gives error for employer_profile 
 pub struct InitUserProfileContext<'info> {
     #[account(mut)]
     pub user: Signer<'info>,

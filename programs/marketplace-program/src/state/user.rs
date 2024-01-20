@@ -38,7 +38,7 @@ impl UserProfile {
         self.email = email;
         self.profile_image = profile_image;
         self.user_type = UserType::Employer;
-        self.skills = None;
+        // self.skills = None;
         Ok(())
     }
 }

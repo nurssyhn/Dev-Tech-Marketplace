@@ -21,6 +21,39 @@ pub mod marketplace_program {
     ) -> Result<()> {
         instructions::create_user::create_employee_profile(ctx, name, email, profile_image, skills)
     }
+
+    pub fn initialize_employer_profile(
+        ctx: Context<InitUserProfileContext>,
+        name: String,
+        email: String,
+        profile_image: String,
+    ) -> Result<()> {
+        instructions::create_user::create_employer_profile(ctx, name, email, profile_image)
+    }
+
+    pub fn initialize_new_job(
+        ctx: Context<InitJobContext>,
+        id: Pubkey,
+        owner: Pubkey,
+        job_title: String,
+        job_description: String,
+        tags: String,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::create_product::create_job(
+            ctx,
+            id,
+            owner,
+            job_title,
+            job_description,
+            tags,
+            amount,
+        )
+    }
+
+    pub fn apply_for_job(ctx: Context<ApplyForJobContext>, user_pda: Pubkey) -> Result<()> {
+        instructions::apply_job::apply_for_job(ctx, user_pda)
+    }
 }
 
 #[derive(Accounts)]
