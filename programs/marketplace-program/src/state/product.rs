@@ -1,5 +1,5 @@
+use crate::errors::ErrorCode;
 use anchor_lang::prelude::*;
-
 // Struct for job details
 #[account]
 pub struct Job {
@@ -87,3 +87,26 @@ pub enum STATUS {
     CLOSED,
     CANCELLED,
 }
+
+// impl STATUS {
+//     pub fn to_code(&self) -> u8 {
+//         match self {
+//             STATUS::OPEN => 0,
+//             STATUS::INPROGRESS => 1,
+//             STATUS::COMPLETED => 2,
+//             STATUS::CLOSED => 3,
+//             STATUS::CANCELLED => 4,
+//         }
+//     }
+
+//     pub fn from(val: u8) -> std::result::Result<STATUS, ProgramError> {
+//         match val {
+//             0 => Ok(STATUS::OPEN),
+//             1 => Ok(STATUS::INPROGRESS),
+//             2 => Ok(STATUS::COMPLETED),
+//             3 => Ok(STATUS::CLOSED),
+//             4 => Ok(STATUS::CANCELLED),
+//             _ => Err(ErrorCode::InvalidStatus.into()),
+//         }
+//     }
+// }

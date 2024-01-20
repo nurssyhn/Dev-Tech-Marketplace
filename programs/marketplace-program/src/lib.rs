@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-
+pub mod errors;
 pub mod instructions;
 use instructions::*;
 
@@ -52,7 +52,11 @@ pub mod marketplace_program {
     }
 
     pub fn apply_for_job(ctx: Context<ApplyForJobContext>, user_pda: Pubkey) -> Result<()> {
-        instructions::apply_job::apply_for_job(ctx, user_pda)
+        instructions::job::apply_for_job(ctx, user_pda)
+    }
+
+    pub fn accept_job_application(ctx: Context<UpdateJobContext>, user: Pubkey) -> Result<()> {
+        instructions::job::accept_job_application(ctx, user)
     }
 }
 

@@ -44,7 +44,7 @@ describe("marketplace-program", () => {
   // PDAs
 
   const employeePDA = PublicKey.findProgramAddressSync(
-    [Buffer.from("User"), employee.publicKey.toBuffer()],
+    [Buffer.from("User"), employee.publicKey.toBuffer(), seed.toBuffer()],
     program.programId
   )[0];
 
@@ -193,6 +193,23 @@ describe("marketplace-program", () => {
         systemProgram: SystemProgram.programId,
       })
       .signers([employee2])
+      .rpc({ skipPreflight: true })
+      .then(confirm)
+      .then(log);
+    console.log("Your transaction signature", tx);
+  });
+
+  it("Accept Job Application ", async () => {
+    // Add your test here.
+
+    const tx = await program.methods
+      .acceptJobApplication(employee2PDA)
+      .accounts({
+        owner: employer.publicKey,
+        job: jobPDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([employer])
       .rpc({ skipPreflight: true })
       .then(confirm)
       .then(log);

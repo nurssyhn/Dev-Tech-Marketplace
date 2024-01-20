@@ -47,7 +47,7 @@ pub fn create_employer_profile(
 }
 
 #[derive(Accounts)]
-#[instruction(name: String, email: String, profile_image: String,)] //using skills here gives error for employer_profile 
+#[instruction(name: String, email: String, profile_image: String)] //using skills here gives error for employer_profile 
 pub struct InitUserProfileContext<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
@@ -56,7 +56,7 @@ pub struct InitUserProfileContext<'info> {
         payer = user, 
         seeds=[b"User", user.key().as_ref()], 
         bump, 
-        space = 8 + UserProfile::MAX_SIZE,
+        space = 8 + UserProfile::MAX_SIZE ,
     )]
     pub user_profile: Account<'info, UserProfile>,
 
@@ -64,7 +64,7 @@ pub struct InitUserProfileContext<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(name: String, email: String, profile_image: String, skills: Option<Vec<String>>,)]
+#[instruction(name: String, email: String, profile_image: String, skills: Option<Vec<String>>,seeds: u64)]
 
 pub struct UpdateUserProfile<'info> {
     #[account(mut)]
