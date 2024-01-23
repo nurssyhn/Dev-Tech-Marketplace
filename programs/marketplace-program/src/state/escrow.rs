@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 #[account]
 pub struct Escrow {
+    pub seed: u64,
     pub employer: Pubkey, //maker
     pub employee: Pubkey, //taker
     pub product: Pubkey,  // job or service id
@@ -10,16 +11,18 @@ pub struct Escrow {
 }
 
 impl Escrow {
-    pub const MAX_SIZE: usize = 32 * 3 + 8 + 1;
+    pub const MAX_SIZE: usize = 8 + 32 * 3 + 8 + 1;
 
     pub fn init_escrow(
         &mut self,
+        seed: u64,
         employer: Pubkey,
         employee: Pubkey,
         product: Pubkey,
         amount: u64,
         is_initialized: bool,
     ) -> Result<()> {
+        self.seed = seed;
         self.employer = employer;
         self.employee = employee;
         self.product = product;

@@ -46,8 +46,12 @@ pub mod marketplace_program {
         instructions::job::apply_for_job(ctx)
     }
 
-    pub fn accept_job_application(ctx: Context<UpdateJobContext>, index: u8) -> Result<()> {
-        instructions::job::accept_job_application(ctx, index)
+    pub fn accept_job_application(
+        ctx: Context<AcceptJobContext>,
+        index: u8,
+        seed: u64,
+    ) -> Result<()> {
+        instructions::job::accept_job_application(ctx, index, seed)
     }
 
     pub fn update_job_completion(ctx: Context<UpdateJobContext>) -> Result<()> {

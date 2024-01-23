@@ -8,6 +8,7 @@ import {
   PublicKey,
   SystemProgram,
 } from "@solana/web3.js";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 describe("marketplace-program", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -62,6 +63,16 @@ describe("marketplace-program", () => {
     [Buffer.from("Job"), employer.publicKey.toBuffer()],
     program.programId
   )[0];
+
+  const escrow = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("escrow"),
+      employer.publicKey.toBuffer(),
+      seed.toBuffer("le", 8),
+    ],
+    program.programId
+  )[0];
+  const vault = getAssociatedTokenAddressSync(employer.publicKey, escrow, true);
 
   it("Airdrop", async () => {
     let airdropIx = await Promise.all(
@@ -196,10 +207,12 @@ describe("marketplace-program", () => {
     // Add your test here.
 
     const tx = await program.methods
-      .acceptJobApplication(index)
+      .acceptJobApplication(index, seed)
       .accounts({
         owner: employer.publicKey,
         job: jobPDA,
+        escrow,
+        vault,
         systemProgram: SystemProgram.programId,
       })
       .signers([employer])
@@ -217,6 +230,9 @@ describe("marketplace-program", () => {
       .accounts({
         owner: employee2.publicKey,
         job: jobPDA,
+        user: employee2.publicKey,
+        escrow,
+        vault,
         systemProgram: SystemProgram.programId,
       })
       .signers([employee2])

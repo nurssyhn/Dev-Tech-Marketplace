@@ -1,4 +1,6 @@
 use anchor_lang::prelude::*;
+use anchor_lang::system_program::{Transfer, transfer};
+use anchor_spl::token_interface::spl_token_2022::solana_zk_token_sdk::zk_token_proof_instruction::transfer;
 
 use crate::state::job::Job;
 use crate::{STATUS, Escrow, escrow};
@@ -34,7 +36,7 @@ pub fn create_job(
 }
 
 
-pub fn accept_job_application(ctx: Context<AcceptJobContext>, index: u8) -> Result<()> {
+pub fn accept_job_application(ctx: Context<AcceptJobContext>, index: u8,seed:u64) -> Result<()> {
     let job = &mut ctx.accounts.job;
     require!(job.owner == ctx.accounts.owner.key(), ErrorCode::UserNotAuthorized);
     job.user = job.bidders[index as usize];
@@ -44,13 +46,24 @@ pub fn accept_job_application(ctx: Context<AcceptJobContext>, index: u8) -> Resu
     if !escrow.is_initialized {
         Escrow::init_escrow(
             escrow,
+            seed,
             ctx.accounts.owner.key(),
-            ctx.accounts.job.user,
-            ctx.accounts.job.id,
-            ctx.accounts.job.amount,
+            job.user,
+            job.id,
+            job.amount,
             true
         )?;
     }
+
+    let transfer_accounts = Transfer {
+        from: ctx.accounts.owner.to_account_info(),
+        to: ctx.accounts.escrow.to_account_info(),
+    };
+
+    let cpi_ctx = CpiContext::new(ctx.accounts.system_program.to_account_info(), transfer_accounts);
+
+    transfer(cpi_ctx, job.amount)?;
+
     job.status = STATUS::INPROGRESS;
 
     Ok(())
@@ -72,10 +85,19 @@ pub fn update_job_completion(ctx: Context<UpdateJobContext>) -> Result<()> {
     let job = &mut ctx.accounts.job;
 
     require!(
-        job.user == ctx.accounts.owner.key(),
+        job.owner == ctx.accounts.owner.key(),
     ErrorCode::UserNotAuthorized
     );
     job.status = STATUS::COMPLETED;
+
+    let transfer_accounts = Transfer {
+        from: ctx.accounts.vault.to_account_info(),
+        to: ctx.accounts.user.to_account_info(),
+    };
+
+    let cpi_ctx = CpiContext::new(ctx.accounts.system_program.to_account_info(), transfer_accounts);
+
+    transfer(cpi_ctx, ctx.accounts.job.amount)?;
 
     Ok(())
 }
@@ -90,7 +112,7 @@ pub struct InitJobContext<'info> {
         init,
         payer = owner, 
         seeds=[b"Job", owner.key().as_ref()], 
-        bump, 
+        bump,
         space = 8 + Job::MAX_SIZE,
     )]
     pub job: Account<'info, Job>,
@@ -122,19 +144,42 @@ pub struct AcceptJobContext<'info> {
         payer= owner,
         space= 8 + Escrow::MAX_SIZE,
         seeds= [b"escrow", owner.key().as_ref(),seed.to_le_bytes().as_ref()],
-        bump,
+        bump
+       
     )]
     pub escrow: Box<Account<'info, Escrow>>,
+    /// CHECK : The token vault to deposit the funds into.
+    #[account(
+        seeds=[b"vault", escrow.key().as_ref(),seed.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub vault: UncheckedAccount<'info>,
 
     pub system_program: Program<'info, System>,
 }
 
 
 #[derive(Accounts)]
+#[instruction(seed:u64)]
 pub struct UpdateJobContext<'info> {
     #[account(mut)]
     owner: Signer<'info>,
     #[account(mut)]
+    user: SystemAccount<'info>,
+    #[account(mut)]
     pub job: Account<'info, Job>,
+    #[account(
+        seeds= [b"escrow", owner.key().as_ref(),seed.to_le_bytes().as_ref()],
+        bump
+       
+    )]
+    pub escrow: Box<Account<'info, Escrow>>,
+    #[account(
+        mut,
+        seeds=[b"vault", escrow.key().as_ref(),seed.to_le_bytes().as_ref()],
+        bump,
+    )]
+    pub vault: SystemAccount<'info>,
+
     pub system_program: Program<'info, System>,
 }
