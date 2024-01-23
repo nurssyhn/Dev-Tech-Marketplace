@@ -160,7 +160,6 @@ pub struct AcceptJobContext<'info> {
 
 
 #[derive(Accounts)]
-#[instruction(seed:u64)]
 pub struct UpdateJobContext<'info> {
     #[account(mut)]
     owner: Signer<'info>,
@@ -169,14 +168,14 @@ pub struct UpdateJobContext<'info> {
     #[account(mut)]
     pub job: Account<'info, Job>,
     #[account(
-        seeds= [b"escrow", owner.key().as_ref(),seed.to_le_bytes().as_ref()],
+        seeds= [b"escrow", owner.key().as_ref(),escrow.seed.to_le_bytes().as_ref()],
         bump
        
     )]
     pub escrow: Box<Account<'info, Escrow>>,
     #[account(
         mut,
-        seeds=[b"vault", escrow.key().as_ref(),seed.to_le_bytes().as_ref()],
+        seeds=[b"vault", escrow.key().as_ref(),escrow.seed.to_le_bytes().as_ref()],
         bump,
     )]
     pub vault: SystemAccount<'info>,
