@@ -40,11 +40,11 @@ describe("marketplace-program", () => {
   const employee = Keypair.generate();
   const employee2 = Keypair.generate();
   const employer = Keypair.generate();
-
+  const index = 1;
   // PDAs
 
   const employeePDA = PublicKey.findProgramAddressSync(
-    [Buffer.from("User"), employee.publicKey.toBuffer(), seed.toBuffer()],
+    [Buffer.from("User"), employee.publicKey.toBuffer()],
     program.programId
   )[0];
 
@@ -141,19 +141,12 @@ describe("marketplace-program", () => {
   it("New Job initialized!", async () => {
     // Add your test here.
 
-    const job_title = "Frontednd Developer";
-    const job_description = "yooy";
-    const tags = "yooy";
+    const job_title = "Frontend Developer";
+    const job_description = "With 1+ YOE";
+    const tags = "React,Nextjs,Typescript";
     const amount = new anchor.BN(solAmount);
     const tx = await program.methods
-      .initializeNewJob(
-        jobPDA,
-        employerPDA,
-        job_title,
-        job_description,
-        tags,
-        amount
-      )
+      .initializeNewJob(jobPDA, job_title, job_description, tags, amount)
       .accounts({
         owner: employer.publicKey,
         job: jobPDA,
@@ -170,7 +163,7 @@ describe("marketplace-program", () => {
     // Add your test here.
 
     const tx = await program.methods
-      .applyForJob(employeePDA)
+      .applyForJob()
       .accounts({
         user: employee.publicKey,
         job: jobPDA,
@@ -186,7 +179,7 @@ describe("marketplace-program", () => {
     // Add your test here.
 
     const tx = await program.methods
-      .applyForJob(employee2PDA)
+      .applyForJob()
       .accounts({
         user: employee2.publicKey,
         job: jobPDA,
@@ -203,13 +196,30 @@ describe("marketplace-program", () => {
     // Add your test here.
 
     const tx = await program.methods
-      .acceptJobApplication(employee2PDA)
+      .acceptJobApplication(index)
       .accounts({
         owner: employer.publicKey,
         job: jobPDA,
         systemProgram: SystemProgram.programId,
       })
       .signers([employer])
+      .rpc({ skipPreflight: true })
+      .then(confirm)
+      .then(log);
+    console.log("Your transaction signature", tx);
+  });
+
+  it(" Job Completion Update ", async () => {
+    // Add your test here.
+
+    const tx = await program.methods
+      .updateJobCompletion()
+      .accounts({
+        owner: employee2.publicKey,
+        job: jobPDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([employee2])
       .rpc({ skipPreflight: true })
       .then(confirm)
       .then(log);

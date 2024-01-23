@@ -19,7 +19,7 @@ pub mod marketplace_program {
         profile_image: String,
         skills: Option<Vec<String>>,
     ) -> Result<()> {
-        instructions::create_user::create_employee_profile(ctx, name, email, profile_image, skills)
+        instructions::user::create_employee_profile(ctx, name, email, profile_image, skills)
     }
 
     pub fn initialize_employer_profile(
@@ -28,35 +28,30 @@ pub mod marketplace_program {
         email: String,
         profile_image: String,
     ) -> Result<()> {
-        instructions::create_user::create_employer_profile(ctx, name, email, profile_image)
+        instructions::user::create_employer_profile(ctx, name, email, profile_image)
     }
 
     pub fn initialize_new_job(
         ctx: Context<InitJobContext>,
         id: Pubkey,
-        owner: Pubkey,
         job_title: String,
         job_description: String,
         tags: String,
         amount: u64,
     ) -> Result<()> {
-        instructions::create_product::create_job(
-            ctx,
-            id,
-            owner,
-            job_title,
-            job_description,
-            tags,
-            amount,
-        )
+        instructions::job::create_job(ctx, id, job_title, job_description, tags, amount)
     }
 
-    pub fn apply_for_job(ctx: Context<ApplyForJobContext>, user_pda: Pubkey) -> Result<()> {
-        instructions::job::apply_for_job(ctx, user_pda)
+    pub fn apply_for_job(ctx: Context<ApplyForJobContext>) -> Result<()> {
+        instructions::job::apply_for_job(ctx)
     }
 
-    pub fn accept_job_application(ctx: Context<UpdateJobContext>, user: Pubkey) -> Result<()> {
-        instructions::job::accept_job_application(ctx, user)
+    pub fn accept_job_application(ctx: Context<UpdateJobContext>, index: u8) -> Result<()> {
+        instructions::job::accept_job_application(ctx, index)
+    }
+
+    pub fn update_job_completion(ctx: Context<UpdateJobContext>) -> Result<()> {
+        instructions::job::update_job_completion(ctx)
     }
 }
 

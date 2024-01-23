@@ -1,8 +1,8 @@
-pub mod create_user;
-pub use create_user::*;
+pub mod user;
+pub use user::*;
 
-pub mod create_product;
-pub use create_product::*;
+pub mod service;
+pub use service::*;
 
 pub mod job;
 pub use job::*;
