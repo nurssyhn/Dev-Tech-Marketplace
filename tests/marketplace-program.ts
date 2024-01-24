@@ -64,16 +64,12 @@ describe("marketplace-program", () => {
   )[0];
 
   const escrow = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("escrow"),
-      employer.publicKey.toBuffer(),
-      seed.toBuffer("le", 8),
-    ],
+    [Buffer.from("escrow"), employer.publicKey.toBuffer()],
     program.programId
   )[0];
 
   const vault = PublicKey.findProgramAddressSync(
-    [Buffer.from("vault"), escrow.toBuffer(), seed.toBuffer("le", 8)],
+    [Buffer.from("vault"), escrow.toBuffer()],
     program.programId
   )[0];
 
@@ -82,7 +78,7 @@ describe("marketplace-program", () => {
       [employee, employer, employee2].map(async (k) => {
         return await anchor
           .getProvider()
-          .connection.requestAirdrop(k.publicKey, 10 * LAMPORTS_PER_SOL)
+          .connection.requestAirdrop(k.publicKey, 20 * LAMPORTS_PER_SOL)
           .then(confirm);
       })
     );

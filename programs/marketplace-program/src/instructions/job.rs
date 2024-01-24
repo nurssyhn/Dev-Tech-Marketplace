@@ -57,7 +57,7 @@ pub fn accept_job_application(ctx: Context<AcceptJobContext>, index: u8,seed:u64
 
     let transfer_accounts = Transfer {
         from: ctx.accounts.owner.to_account_info(),
-        to: ctx.accounts.escrow.to_account_info(),
+        to: ctx.accounts.vault.to_account_info(),
     };
 
     let cpi_ctx = CpiContext::new(ctx.accounts.system_program.to_account_info(), transfer_accounts);
@@ -81,8 +81,16 @@ pub fn apply_for_job(ctx: Context<ApplyForJobContext>) -> Result<()> {
     Ok(())
 }
 
-pub fn update_job_completion(ctx: Context<UpdateJobContext>) -> Result<()> {
+pub fn update_job_completion(ctx: Context<UpdateJobContext>, bumps :u8) -> Result<()> {
+
+    msg!("update_job_completion {}", ctx.accounts.vault.to_account_info().key());
     let job = &mut ctx.accounts.job;
+    let seeds = &[
+                    &b"vault"[..],
+                    &ctx.accounts.escrow.key().to_bytes()[..], 
+                    &[bumps]
+                ];
+                let signer_seeds = &[&seeds[..]];
 
     require!(
         job.owner == ctx.accounts.owner.key(),
@@ -95,7 +103,7 @@ pub fn update_job_completion(ctx: Context<UpdateJobContext>) -> Result<()> {
         to: ctx.accounts.user.to_account_info(),
     };
 
-    let cpi_ctx = CpiContext::new(ctx.accounts.system_program.to_account_info(), transfer_accounts);
+    let cpi_ctx = CpiContext::new_with_signer(ctx.accounts.system_program.to_account_info(), transfer_accounts, signer_seeds);
 
     transfer(cpi_ctx, ctx.accounts.job.amount)?;
 
@@ -143,14 +151,15 @@ pub struct AcceptJobContext<'info> {
         init,
         payer= owner,
         space= 8 + Escrow::MAX_SIZE,
-        seeds= [b"escrow", owner.key().as_ref(),seed.to_le_bytes().as_ref()],
+        seeds= [b"escrow", owner.key().as_ref()],
         bump
        
     )]
     pub escrow: Box<Account<'info, Escrow>>,
     /// CHECK : The token vault to deposit the funds into.
     #[account(
-        seeds=[b"vault", escrow.key().as_ref(),seed.to_le_bytes().as_ref()],
+        mut,
+        seeds=[b"vault", escrow.key().as_ref()],
         bump
     )]
     pub vault: UncheckedAccount<'info>,
@@ -168,14 +177,15 @@ pub struct UpdateJobContext<'info> {
     #[account(mut)]
     pub job: Account<'info, Job>,
     #[account(
-        seeds= [b"escrow", owner.key().as_ref(),escrow.seed.to_le_bytes().as_ref()],
+        mut,
+        seeds= [b"escrow", owner.key().as_ref()],
         bump
        
     )]
     pub escrow: Box<Account<'info, Escrow>>,
     #[account(
         mut,
-        seeds=[b"vault", escrow.key().as_ref(),escrow.seed.to_le_bytes().as_ref()],
+        seeds=[b"vault", escrow.key().as_ref()],
         bump,
     )]
     pub vault: SystemAccount<'info>,

@@ -55,7 +55,9 @@ pub mod marketplace_program {
     }
 
     pub fn update_job_completion(ctx: Context<UpdateJobContext>) -> Result<()> {
-        instructions::job::update_job_completion(ctx)
+        let bumps = ctx.bumps.vault;
+
+        instructions::job::update_job_completion(ctx, bumps)
     }
 }
 
