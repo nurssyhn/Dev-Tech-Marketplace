@@ -7,11 +7,14 @@ skip-lint = false
 [programs.localnet]
 marketplace_program = "Hnf7nuJLhXP5pMh7AQrqratPUWcAXzsw6MUf6vacY23V"
 
+[programs.devnet]
+marketplace_program = "Hnf7nuJLhXP5pMh7AQrqratPUWcAXzsw6MUf6vacY23V"
+
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"
 wallet = "/home/nikhilkr/.config/solana/id.json"
 
 [scripts]

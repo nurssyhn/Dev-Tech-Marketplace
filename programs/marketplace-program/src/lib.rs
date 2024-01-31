@@ -54,10 +54,48 @@ pub mod marketplace_program {
         instructions::job::accept_job_application(ctx, index, seed)
     }
 
+    pub fn close_job(ctx: Context<UpdateJobContext>) -> Result<()> {
+        instructions::job::close_job(ctx)
+    }
+
     pub fn update_job_completion(ctx: Context<UpdateJobContext>) -> Result<()> {
+        instructions::job::update_job_completion(ctx)
+    }
+    pub fn update_job_payment(ctx: Context<UpdateJobPaymentContext>) -> Result<()> {
         let bumps = ctx.bumps.vault;
 
-        instructions::job::update_job_completion(ctx, bumps)
+        instructions::job::update_job_payment(ctx, bumps)
+    }
+
+    pub fn initialize_new_service(
+        ctx: Context<InitServiceContext>,
+        id: Pubkey,
+        service_title: String,
+        service_description: String,
+        tags: String,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::service::create_service(
+            ctx,
+            id,
+            service_title,
+            service_description,
+            tags,
+            amount,
+        )
+    }
+
+    pub fn apply_for_service(ctx: Context<ApplyForServiceContext>, seed: u64) -> Result<()> {
+        instructions::service::apply_for_service(ctx, seed)
+    }
+
+    pub fn update_service_completion(ctx: Context<UpdateServiceContext>) -> Result<()> {
+        instructions::service::update_service_completion(ctx)
+    }
+
+    pub fn update_service_payment(ctx: Context<UpdateServicePaymentContext>) -> Result<()> {
+        let bumps = ctx.bumps.vault;
+        instructions::service::update_service_payment(ctx, bumps)
     }
 }
 

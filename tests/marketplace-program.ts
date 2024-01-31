@@ -62,6 +62,15 @@ describe("marketplace-program", () => {
     [Buffer.from("Job"), employer.publicKey.toBuffer()],
     program.programId
   )[0];
+  const servicePDA = PublicKey.findProgramAddressSync(
+    [Buffer.from("Service"), employee2.publicKey.toBuffer()],
+    program.programId
+  )[0];
+
+  const servicePDA2 = PublicKey.findProgramAddressSync(
+    [Buffer.from("Service"), employer.publicKey.toBuffer()],
+    program.programId
+  )[0];
 
   const escrow = PublicKey.findProgramAddressSync(
     [Buffer.from("escrow"), employer.publicKey.toBuffer()],
@@ -73,12 +82,22 @@ describe("marketplace-program", () => {
     program.programId
   )[0];
 
+  const serviceEscrow = PublicKey.findProgramAddressSync(
+    [Buffer.from("serviceescrow"), employer.publicKey.toBuffer()],
+    program.programId
+  )[0];
+
+  const serviceVault = PublicKey.findProgramAddressSync(
+    [Buffer.from("servicevault"), serviceEscrow.toBuffer()],
+    program.programId
+  )[0];
+
   it("Airdrop", async () => {
     let airdropIx = await Promise.all(
       [employee, employer, employee2].map(async (k) => {
         return await anchor
           .getProvider()
-          .connection.requestAirdrop(k.publicKey, 20 * LAMPORTS_PER_SOL)
+          .connection.requestAirdrop(k.publicKey, 50 * LAMPORTS_PER_SOL)
           .then(confirm);
       })
     );
@@ -230,8 +249,105 @@ describe("marketplace-program", () => {
         owner: employer.publicKey,
         job: jobPDA,
         user: employee2.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([employee2])
+      .rpc({ skipPreflight: true })
+      .then(confirm)
+      .then(log);
+    console.log("Your transaction signature", tx);
+  });
+
+  it(" Job Payment Update ", async () => {
+    // Add your test here.
+
+    const tx = await program.methods
+      .updateJobPayment()
+      .accounts({
+        owner: employer.publicKey,
+        job: jobPDA,
+        user: employee2.publicKey,
         escrow,
         vault,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([employer])
+      .rpc({ skipPreflight: true })
+      .then(confirm)
+      .then(log);
+    console.log("Your transaction signature", tx);
+  });
+
+  it("service created", async () => {
+    // Add your test here.
+    const service_title = "Web development";
+    const service_description = "1+ YOE";
+    const tags = "React,Nextjs,Typescript";
+    const amount = new anchor.BN(solAmount);
+
+    const tx = await program.methods
+      .initializeNewService(
+        servicePDA,
+        service_title,
+        service_description,
+        tags,
+        amount
+      )
+      .accounts({
+        owner: employee2.publicKey,
+        service: servicePDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([employee2])
+      .rpc({ skipPreflight: true })
+      .then(confirm)
+      .then(log);
+    console.log("Your transaction signature", tx);
+  });
+
+  it("service bought", async () => {
+    const tx = await program.methods
+      .applyForService(seed)
+      .accounts({
+        owner: employee2.publicKey,
+        user: employer.publicKey,
+        servicePda: servicePDA2,
+        service: servicePDA,
+        escrow: serviceEscrow,
+        vault: serviceVault,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([employer])
+      .rpc({ skipPreflight: true })
+      .then(confirm)
+      .then(log);
+    console.log("Your transaction signature", tx);
+  });
+
+  it("service updated", async () => {
+    const tx = await program.methods
+      .updateServiceCompletion()
+      .accounts({
+        owner: employee2.publicKey,
+        service: servicePDA2,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([employee2])
+      .rpc({ skipPreflight: true })
+      .then(confirm)
+      .then(log);
+    console.log("Your transaction signature", tx);
+  });
+
+  it("service payment update", async () => {
+    const tx = await program.methods
+      .updateServicePayment()
+      .accounts({
+        owner: employee2.publicKey,
+        service: servicePDA2,
+        user: employer.publicKey,
+        escrow: serviceEscrow,
+        vault: serviceVault,
         systemProgram: SystemProgram.programId,
       })
       .signers([employer])

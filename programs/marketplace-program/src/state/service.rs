@@ -12,11 +12,12 @@ pub struct Service {
     pub tags: String,
     pub timestamp: i64,
     pub amount: u64,
-    pub status: STATUS,
+    pub service_status: STATUS,
+    pub payment_status: STATUS,
 }
 
 impl Service {
-    pub const MAX_SIZE: usize = 2 + 32 + 32 + 1 + (4 + 20) + (4 + 25) + (4 + 25) + 8 + 8 + 1 + 1;
+    pub const MAX_SIZE: usize = 3 * 32 + (4 + 50) + (4 + 500) + (4 + 100) + 8 + 8 + 1;
 
     pub fn init_service(
         &mut self,
@@ -35,7 +36,8 @@ impl Service {
         self.tags = tags;
         self.timestamp = clock.unix_timestamp;
         self.amount = amount;
-        self.status = STATUS::OPEN;
+        self.service_status = STATUS::OPEN;
+        self.payment_status = STATUS::OPEN;
         Ok(())
     }
 
@@ -58,7 +60,8 @@ impl Service {
         self.tags = tags;
         self.timestamp = clock.unix_timestamp;
         self.amount = amount;
-        self.status = STATUS::INPROGRESS;
+        self.service_status = STATUS::INPROGRESS;
+        self.payment_status = STATUS::INPROGRESS;
         Ok(())
     }
 }

@@ -1,14 +1,12 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{Transfer, transfer};
-use anchor_spl::token_interface::spl_token_2022::solana_zk_token_sdk::zk_token_proof_instruction::transfer;
 
 use crate::state::job::Job;
-use crate::{STATUS, Escrow, escrow};
+use crate::{STATUS, Escrow};
 
 use crate::errors::ErrorCode;
+
 //for employeR users
-
-
 pub fn create_job(
     ctx: Context<InitJobContext>,
     id: Pubkey,
@@ -39,6 +37,7 @@ pub fn create_job(
 pub fn accept_job_application(ctx: Context<AcceptJobContext>, index: u8,seed:u64) -> Result<()> {
     let job = &mut ctx.accounts.job;
     require!(job.owner == ctx.accounts.owner.key(), ErrorCode::UserNotAuthorized);
+    require!(job.job_status == STATUS::OPEN, ErrorCode::InvalidJobStatus);
     job.user = job.bidders[index as usize];
 
 
@@ -64,27 +63,17 @@ pub fn accept_job_application(ctx: Context<AcceptJobContext>, index: u8,seed:u64
 
     transfer(cpi_ctx, job.amount)?;
 
-    job.status = STATUS::INPROGRESS;
+    job.job_status = STATUS::INPROGRESS;
 
     Ok(())
 }
 
 
-// for employee users
-pub fn apply_for_job(ctx: Context<ApplyForJobContext>) -> Result<()> {
+
+pub fn update_job_payment(ctx: Context<UpdateJobPaymentContext>, bumps :u8) -> Result<()> {
+   
     let job = &mut ctx.accounts.job;
-
-    require!(job.status == STATUS::OPEN, ErrorCode::JobStatusNotOpen);
-
-    job.bidders.push(ctx.accounts.user.key());
-
-    Ok(())
-}
-
-pub fn update_job_completion(ctx: Context<UpdateJobContext>, bumps :u8) -> Result<()> {
-
-    msg!("update_job_completion {}", ctx.accounts.vault.to_account_info().key());
-    let job = &mut ctx.accounts.job;
+    require!(job.job_status == STATUS::COMPLETED, ErrorCode::InvalidJobStatus);
     let seeds = &[
                     &b"vault"[..],
                     &ctx.accounts.escrow.key().to_bytes()[..], 
@@ -96,7 +85,7 @@ pub fn update_job_completion(ctx: Context<UpdateJobContext>, bumps :u8) -> Resul
         job.owner == ctx.accounts.owner.key(),
     ErrorCode::UserNotAuthorized
     );
-    job.status = STATUS::COMPLETED;
+   
 
     let transfer_accounts = Transfer {
         from: ctx.accounts.vault.to_account_info(),
@@ -105,7 +94,43 @@ pub fn update_job_completion(ctx: Context<UpdateJobContext>, bumps :u8) -> Resul
 
     let cpi_ctx = CpiContext::new_with_signer(ctx.accounts.system_program.to_account_info(), transfer_accounts, signer_seeds);
 
-    transfer(cpi_ctx, ctx.accounts.job.amount)?;
+    transfer(cpi_ctx, job.amount)?;
+    job.payment_status = STATUS::PAID;
+
+    Ok(())
+}
+
+
+pub fn close_job(ctx: Context<UpdateJobContext>) -> Result<()> {
+    let job = &mut ctx.accounts.job;
+    require!(job.owner == ctx.accounts.owner.key(), ErrorCode::UserNotAuthorized);
+    // close job is status is open or completed
+    require!(job.job_status == STATUS::OPEN || job.job_status == STATUS::COMPLETED, ErrorCode::InvalidJobStatus);
+    job.job_status = STATUS::CLOSED;
+    Ok(())
+}
+
+// for employee users
+pub fn apply_for_job(ctx: Context<ApplyForJobContext>) -> Result<()> {
+    let job = &mut ctx.accounts.job;
+
+    require!(job.job_status == STATUS::OPEN, ErrorCode::JobStatusNotOpen);
+
+    job.bidders.push(ctx.accounts.user.key());
+
+    Ok(())
+}
+
+
+pub fn update_job_completion(ctx: Context<UpdateJobContext>) -> Result<()>{
+    let job = &mut ctx.accounts.job;
+
+    require!(
+        job.owner == ctx.accounts.owner.key() && job.user == ctx.accounts.user.key(),
+    ErrorCode::UserNotAuthorized
+    );
+   
+    job.job_status = STATUS::COMPLETED;
 
     Ok(())
 }
@@ -170,6 +195,20 @@ pub struct AcceptJobContext<'info> {
 
 #[derive(Accounts)]
 pub struct UpdateJobContext<'info> {
+    #[account(mut)]
+    owner: SystemAccount<'info>,
+    #[account(mut)]
+    user: Signer<'info>,
+    #[account(mut)]
+    pub job: Account<'info, Job>,
+    
+
+    pub system_program: Program<'info, System>,
+}
+
+
+#[derive(Accounts)]
+pub struct UpdateJobPaymentContext<'info> {
     #[account(mut)]
     owner: Signer<'info>,
     #[account(mut)]

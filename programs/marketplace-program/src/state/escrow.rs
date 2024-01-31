@@ -3,9 +3,9 @@ use anchor_lang::prelude::*;
 #[account]
 pub struct Escrow {
     pub seed: u64,
-    pub employer: Pubkey, //maker
-    pub employee: Pubkey, //taker
-    pub product: Pubkey,  // job or service id
+    pub maker: Pubkey,   //maker
+    pub taker: Pubkey,   //taker
+    pub product: Pubkey, // job or service id
     pub amount: u64,
     pub is_initialized: bool,
 }
@@ -16,16 +16,16 @@ impl Escrow {
     pub fn init_escrow(
         &mut self,
         seed: u64,
-        employer: Pubkey,
-        employee: Pubkey,
+        maker: Pubkey,
+        taker: Pubkey,
         product: Pubkey,
         amount: u64,
 
         is_initialized: bool,
     ) -> Result<()> {
         self.seed = seed;
-        self.employer = employer;
-        self.employee = employee;
+        self.maker = maker;
+        self.taker = taker;
         self.product = product;
         self.amount = amount;
         self.is_initialized = is_initialized;
